@@ -1,0 +1,55 @@
+This is a very simple file system implementation.
+
+Initialization and superblock setup
+
+
+The in-construction superblock is passed in, along with a couple of other arguments that we can ignore. We do have to fill in some of the superblock fields, though. The code starts out like this:
+
+	sb->s_blocksize = PAGE_CACHE_SIZE;
+	sb->s_blocksize_bits = PAGE_CACHE_SHIFT;
+	sb->s_magic = LFS_MAGIC;
+	sb->s_op = &lfs_s_ops;
+
+lfs_make_inode(). The function is pure boilerplate; it looks like:
+
+static struct inode *lfs_make_inode(struct super_block *sb, int mode)
+{
+	struct inode *ret = new_inode(sb);
+
+	if (ret) {
+		ret->i_mode = mode;
+		ret->i_uid = ret->i_gid = 0;
+		ret->i_blksize = PAGE_SIZE;
+		ret->i_blocks = 0;
+		ret->i_atime = ret->i_mtime = ret->i_ctime = CURRENT_TIME;
+	}
+	return ret;
+}
+
+Implementing file operations
+The operations on the counters themselves are to be found in the file_operations structure that we associate with the counter file inodes:
+
+    static struct file_operations lfs_file_ops = {
+	    .open	= lfs_open,
+	    .read 	= lfs_read_file,
+	    .write  	= lfs_write_file,
+    };
+
+
+
+#Instructions to use the code
+
+make
+
+This generates a file rkfs.o. Load the module as root using
+insmod svfs.ko
+
+Mount the file system using
+mount -t svfs none /mnt/sfs_mount
+
+Unmount using
+umount /mnt/sfs_mount
+
+Unload the module using
+rmmod svfs
+
